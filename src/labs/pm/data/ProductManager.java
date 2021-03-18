@@ -13,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -55,6 +56,14 @@ public class ProductManager {
         return product;
     }
     
+    public Product reviewProduct(int id, Rating rating, String comments) {
+        Product product = findProduct(id);
+        if (product != null) {
+            return reviewProduct(product, rating, comments);
+        }
+        return null;
+    }
+    
     public Product reviewProduct(Product product, Rating rating, String comments) {
         
         List<Review> reviews = products.get(product);
@@ -71,9 +80,26 @@ public class ProductManager {
         return product;
     }
 
+    public Product findProduct(int id) {
+        for (Product product: products.keySet()) {
+            if (product.getId() == id)
+                return product;
+        }
+        return null;
+    }
+    
+    public void printProductReport(int id) {
+        Product product = findProduct(id);
+        if (product != null) {
+            printProductReport(product);            
+        }
+    }
+    
     public void printProductReport(Product product) {
         
         List<Review> reviews = products.get(product);
+        
+        Collections.sort(reviews);
         
         StringBuilder txt = new StringBuilder();
         txt.append(MessageFormat.format(resources.getString("products"), 
