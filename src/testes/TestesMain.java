@@ -34,7 +34,13 @@ public class TestesMain {
         //immutableArrayList();
         //mutableArrayList();
         //collectionRemoveIf();
-        collectionsMethods();
+        //collectionsMethods();
+        //printInnerClass();
+        //printLocalInnerClass("A local inner class");
+        //printAnonymousInnerClass();
+        //printAnonymousInnerClass2();
+        //printLambdaFunction();
+        testPredicate();
     }
     
     private static void arrayDeclaration() {
@@ -223,6 +229,171 @@ public class TestesMain {
         System.out.println("Fill: " + products);
         
     }
+    
+    private static void printInnerClass() {
+        System.out.println("static inner class: " + new StaticInnerClass("Test"));
+        //System.out.println("member inner class: " + new MemberInnerClass("Name")); // Can only be instantiated on an instance of outer class. Not from static method.
+    }
+    
+    private final String finalInstanceVariable = "Final instance variable";
+       
+    private static void printLocalInnerClass(String testMethod) {
+        String localInnerVariable = "Inside of method";
+        class LocalInnerClass {
+            private String teste;
+            private void setTest(String teste) {
+            //    testMethod = "a" + teste; // Local inner classes can access parameters only if they are final or effectively final
+                this.teste = testMethod;
+            }
+            @Override
+            public String toString() {
+                setTest("bbb");
+                return teste + " " 
+                    + localInnerVariable + " " 
+                    + staticVariable + " " 
+                //    + instanceVariable // Can´t access instance variables from outer class.
+                    ;
+            }
+        }
+        System.out.println("Local inner class: " + new LocalInnerClass());
+    }
+    
+    private static String staticVariable = "I'm a static variable!";
+    private String instanceVariable = "I'm a instance variable";
+    
+    private static class StaticInnerClass {
+        
+        private String description;
+        
+        private StaticInnerClass(String description) {
+            this.description = description;
+        }
+
+        @Override
+        public String toString() {
+            return description + " " 
+                + staticVariable + " " // Static inner classes CAN SEE outer classe's static variables. Even private ones.
+//                + instanceVariable // Static inner classes CAN'T SEE outer classe's instance variables
+                ;
+        }
+        
+    }
+    
+    private class MemberInnerClass {
+        
+        private String name;
+        
+        public MemberInnerClass(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name + " " + staticVariable + " " + instanceVariable; // Inner member classes CAN SEE outer classes static and instance variables. Even private ones. 
+        }
+        
+    }
+    
+    private static void printAnonymousInnerClass() {
+        System.out.println(new OneInterface() {
+            @Override
+            public String getNameToPrint() {
+                return "Name to print!";
+            }
+        }.getNameToPrint());
+    }
+    
+    private static void printAnonymousInnerClass2() {
+        System.out.println(new StaticInnerClass("An string") {
+            @Override
+            public String toString() {
+                return super.toString() + " OVERRIDING TO_STRING!!!!";
+            }
+        });
+    }
+    
+    private static void printLambdaFunction() {
+        List<String> strings = Arrays.asList("Caio", "Gertrudes", "Antônia", "Marcela", "Ana", "Claudia");
+        
+        // Declaring lambda on a variable
+        Comparator<String> comp1 = (s1, s2) -> s1.charAt(0) - s2.charAt(0);
+        Collections.sort(strings, comp1);
+        System.out.println(strings);
+        
+        // Declaring directally
+        Collections.sort(strings, (s1, s2) -> s1.length() - s2.length());
+        System.out.println(strings);
+        
+        // Lambda without parameter
+        OneInterface lambda = () -> "A name!";
+        System.out.println(lambda.getNameToPrint());
+        
+        // Lambda with just one parameter dont need parenthesis
+        OneInterfaceWithJustOneParameter lambda2 = n -> "My name: " + n;
+        System.out.println(lambda2.printYourName("Antoine"));
+        
+        // If you need any modifier like final, you will have to inform the type (or 'var') and use parenthesis
+        OneInterfaceWithJustOneParameter lambda3 = (final String n) -> "My name: " + n;
+        System.out.println(lambda3.printYourName("Antoine final"));
+        
+        OneInterfaceWithJustOneParameter lambda4 = (final var n) -> "My name: " + n;
+        System.out.println(lambda4.printYourName("Antoine final with var"));
+        
+        TextFilter filter = new TextFilter();
+        List<String> mutableNotFixedLengthList = new ArrayList<>(strings);
+        
+        // You could use :: to reference a instance method or static method if it is SEMANTICALLY IDENTICAL to the method that lambda expression is implementing.
+        // You could do that even if the class or interface didn't implements the required interface. It works just because of the params and return of the method.
+        mutableNotFixedLengthList.removeIf(s -> TextFilter.removeA(s));
+        mutableNotFixedLengthList.removeIf(TextFilter::removeA);
+        
+        Collections.sort(mutableNotFixedLengthList, (s1, s2) -> filter.sortText(s1, s2));
+        Collections.sort(strings, filter::sortText);
+        
+        // compareToIgnoreCase is a instance method of String. This code works!
+        Collections.sort(mutableNotFixedLengthList, String::compareToIgnoreCase);
+        System.out.println(mutableNotFixedLengthList);
+    }
+    
+    private static void testPredicate() {
+        List<Product> menu = new ArrayList<>();
+        menu.add(new Food(1,"Cake", BigDecimal.valueOf(1.99), Rating.NOT_RATED, LocalDate.now()));
+        menu.add(new Food(2,"Cookie", BigDecimal.valueOf(2.99), Rating.NOT_RATED, LocalDate.now()));
+        menu.add(new Drink(3,"Tea", BigDecimal.valueOf(1.99), Rating.NOT_RATED));
+        menu.add(new Drink(4,"Coffee", BigDecimal.valueOf(1.99), Rating.NOT_RATED));
+        
+        Predicate<Product> foodFilter = p -> p instanceof Food;
+        Predicate<Product> priceFilter = p -> p.getPrice().compareTo(BigDecimal.valueOf(2)) < 0;
+        
+        menu.removeIf(foodFilter.negate().or(priceFilter));
+        menu.removeIf(Predicate.isEqual(new Food(5, "Cake", BigDecimal.valueOf(1.99), Rating.NOT_RATED, LocalDate.now())));
+        
+        System.out.println(menu);
+    }
+    
+    @FunctionalInterface
+    private interface OneInterface {
+        String getNameToPrint();
+    }
+    
+    @FunctionalInterface
+    private interface OneInterfaceWithJustOneParameter {
+        String printYourName(String name);
+    }
+    
+    public static class TextFilter {
+        
+        public static boolean removeA(String s) {
+            return s.equals("remove A");
+        }
+        
+        public int sortText(String s1, String s2) {
+            return s1.compareTo(s2);
+        }
+    }
+    
 }
+
+
 
 

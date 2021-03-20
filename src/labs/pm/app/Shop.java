@@ -21,7 +21,7 @@ public class Shop {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        ProductManager pm = new ProductManager(Locale.UK);
+        ProductManager pm = new ProductManager("ru-RU");
         pm.createProduct(101, "Tea", BigDecimal.valueOf(1.99), Rating.NOT_RATED);
         pm.printProductReport(101);
         pm.reviewProduct(101, Rating.FOUR_STAR, "Nice hot cup of tea.");
@@ -30,6 +30,9 @@ public class Shop {
         pm.reviewProduct(101, Rating.FOUR_STAR, "Good tea.");
         pm.reviewProduct(101, Rating.FIVE_STAR, "Perfect tea.");
         pm.reviewProduct(101, Rating.THREE_STAR, "Just add some lemon.");
+        pm.printProductReport(101);
+
+        pm.changeLocale("en-UK");
         pm.printProductReport(101);
 
         
