@@ -6,6 +6,7 @@
 package labs.pm.app;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.Locale;
 import labs.pm.data.Product;
 import labs.pm.data.ProductManager;
@@ -34,6 +35,19 @@ public class Shop {
 
         pm.changeLocale("en-UK");
         pm.printProductReport(101);
+        
+        
+        pm.createProduct(102, "Water", BigDecimal.valueOf(.9), Rating.NOT_RATED);
+        pm.createProduct(103, "Coke", BigDecimal.valueOf(1.2), Rating.NOT_RATED);
+        pm.createProduct(104, "Lemonade", BigDecimal.valueOf(2.9), Rating.NOT_RATED);
+
+        pm.printProducts((p1,p2) -> p2.getPrice().compareTo(p1.getPrice()));
+        
+        Comparator<Product> ratingSorter = (p1, p2) -> p2.getRating().ordinal() - p1.getRating().ordinal();
+        Comparator<Product> priceSorter = (p1, p2) -> p2.getPrice().compareTo(p1.getPrice());
+        
+        //Combinando comparators
+        pm.printProducts(ratingSorter.thenComparing(priceSorter).reversed());
 
         
 //        Product p1 = pm.createProduct(101, "Tea", BigDecimal.valueOf(1.99), Rating.NOT_RATED);

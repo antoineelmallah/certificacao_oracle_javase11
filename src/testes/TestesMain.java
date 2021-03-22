@@ -13,7 +13,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import labs.pm.data.Drink;
 import labs.pm.data.Food;
 import labs.pm.data.Product;
@@ -40,7 +43,11 @@ public class TestesMain {
         //printAnonymousInnerClass();
         //printAnonymousInnerClass2();
         //printLambdaFunction();
-        testPredicate();
+        //testPredicate();
+        //streamsTest();
+        //flatMapTest();
+        //testIntermediateStreamOperators();
+        testShortCircuitTerminalOperator();
     }
     
     private static void arrayDeclaration() {
@@ -392,6 +399,144 @@ public class TestesMain {
         }
     }
     
+    private static void streamsTest() {
+        // IntStream, DoubleStream and LongStream interfaces prevent excessive boxing and unboxing operations to improve performance.
+        int sum = IntStream.generate(() -> (int) (Math.random() * 10)).takeWhile(n -> n != 3).sum();
+        System.out.println("sum: "+sum);
+        
+        // Creating stream from varargs
+        Stream.of("Antoine", "El", "Mallah").forEach(i -> System.out.println("i: "+i));
+        
+        Product[] array = {
+            new Food(1, "Hot-dog", BigDecimal.valueOf(1.99), Rating.NOT_RATED, LocalDate.now()),
+            new Food(2, "Meat", BigDecimal.valueOf(3.99), Rating.NOT_RATED, LocalDate.now()),
+            new Drink(3, "Juice", BigDecimal.valueOf(0.99), Rating.NOT_RATED),
+            new Drink(4, "Water", BigDecimal.valueOf(.5), Rating.NOT_RATED),
+        };
+        List<Product> list = Arrays.asList(array);
+        
+        // We can get streams from lists
+        Double sumDouble = list.stream().parallel().mapToDouble(p -> p.getPrice().doubleValue()).sum();
+        System.out.println("sum: "+sumDouble);
+        
+        // We can get streams from arrays
+        Arrays.stream(array).filter(p -> p instanceof Food).forEach(p -> System.out.println("Prod: "+p.getName()+". discount: "+p.getDiscount()));
+        
+        list.stream()
+            .filter(p -> p.getDiscount().equals(BigDecimal.ZERO)) // Predicate<T>
+            .peek(p -> p.applyRating(1))                          // Consumer<T>
+            .map(p -> p.getPrice())                               // Function<T,R>
+            .forEach(price -> price.multiply(BigDecimal.TEN));    // Consumer<T>
+    }
+    
+    private static void flatMapTest() {
+        List<Outer> fathers = Arrays.asList(
+            new Outer("Pai 1").addSon(new Inner("Filho 1", 1)).addSon(new Inner("Filho 2", 2)).addSon(new Inner("Filho 3", 3)),
+            new Outer("Pai 2").addSon(new Inner("Filho 4", 4)).addSon(new Inner("Filho 5", 5)).addSon(new Inner("Filho 6", 6)),
+            new Outer("Pai 3").addSon(new Inner("Filho 7", 7)).addSon(new Inner("Filho 8", 8)).addSon(new Inner("Filho 9", 9)),
+            new Outer("Pai 4").addSon(new Inner("Filho 10", 10)).addSon(new Inner("Filho 11", 11)).addSon(new Inner("Filho 12", 12)),
+            new Outer("Pai 5").addSon(new Inner("Filho 13", 13)).addSon(new Inner("Filho 14", 12)).addSon(new Inner("Filho 15", 15))
+        );
+                
+        fathers.stream()
+            .flatMap(f -> f.getSons().stream())
+            .forEach(s -> System.out.println(s));
+    }
+    
+    private static class Outer {
+        
+        private String name;
+        
+        private List<Inner> sons;
+
+        public Outer(String name) {
+            this.name = name;
+            this.sons = new ArrayList<>();
+        }
+        
+        public Outer addSon(Inner son) {
+            this.sons.add(son);
+            return this;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public List<Inner> getSons() {
+            return new ArrayList(sons);
+        }
+
+        @Override
+        public String toString() {
+            return "Father: "+this.name;
+        }
+        
+    }
+    
+    private static class Inner {
+        
+        private String name;
+        
+        private int num;
+
+        public Inner(String name, int num) {
+            this.name = name;
+            this.num = num;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getNum() {
+            return num;
+        }
+
+        @Override
+        public String toString() {
+            return "Son: "+this.name + " num: "+ num;
+        }
+        
+    }
+    
+    private static void testIntermediateStreamOperators() {
+        List<String> strings = Arrays.asList("A", "B", "C", "D", "B", "D");
+        
+        System.out.println("Primeira:");
+        strings.stream()
+            .distinct()
+        //    .peek(System.out::println)
+            .sorted()
+        //    .peek(System.out::println)
+            .skip(2)
+        //    .peek(System.out::println)
+            .map(s -> s.toLowerCase())
+            .forEach(System.out::println);
+        
+        System.out.println("Segunda:");
+        strings.stream()
+            .takeWhile(s -> !s.equals("D"))
+            .dropWhile(s -> !s.equals("C"))
+            .limit(2)
+            .forEach(System.out::println);
+    }
+    
+    private static void testShortCircuitTerminalOperator() {
+        List<String> strings = Arrays.asList("A", "B", "C", "D", "B", "D");
+    
+        boolean a = strings.stream().allMatch(s -> s.equals("A"));
+        boolean b = strings.stream().anyMatch(s -> s.equals("A"));
+        boolean c = strings.stream().noneMatch(s -> s.equals("A"));
+        Optional<String> any = strings.stream().findAny();
+        Optional<String> first = strings.stream().findFirst();
+        
+        System.out.println("a: "+a);
+        System.out.println("b: "+b);
+        System.out.println("c: "+c);
+        System.out.println("any: "+any.orElse("null"));
+        System.out.println("first: "+first.orElse("null"));
+    }
 }
 
 
