@@ -5,7 +5,13 @@
  */
 package testes;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,8 +19,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import labs.pm.data.Drink;
@@ -47,7 +58,14 @@ public class TestesMain {
         //streamsTest();
         //flatMapTest();
         //testIntermediateStreamOperators();
-        testShortCircuitTerminalOperator();
+        //testShortCircuitTerminalOperator();
+        //testCountMinMaxSumAverageLambdaOperations();
+        //testReduceLambdaOperation();
+        //testCollect();
+        //testFileSystem();
+        //testPaths();
+        //testFilesProperties();
+        testCreatePaths();
     }
     
     private static void arrayDeclaration() {
@@ -536,6 +554,191 @@ public class TestesMain {
         System.out.println("c: "+c);
         System.out.println("any: "+any.orElse("null"));
         System.out.println("first: "+first.orElse("null"));
+    }
+    
+    private static void testCountMinMaxSumAverageLambdaOperations() {
+        String[] values = { "RED", "GREEN", "BLUE" };
+        long v1 = Arrays.stream(values).filter(s -> s.indexOf("R") != -1).count();
+        System.out.println("count: " + v1);
+        int v2 = Arrays.stream(values).mapToInt(s -> s.length()).sum();
+        System.out.println("sum: " + v2);
+        OptionalDouble v3 = Arrays.stream(values).mapToInt(s -> s.length()).average();
+        double avgValue = v3.isPresent() ? v3.getAsDouble() : 0;
+        System.out.println("average: " + avgValue);
+        Optional<String> v4 = Arrays.stream(values).max((s1, s2) -> s1.length() - s2.length());
+        Optional<String> v5 = Arrays.stream(values).min((s1, s2) -> s1.length() - s2.length());
+        System.out.println("max: "+v4.orElse("no data"));
+        System.out.println("min: "+v5.orElse("no data"));
+    }
+    
+    private static void testReduceLambdaOperation() {
+        Product[] array = {
+            new Food(1, "Hot-dog", BigDecimal.valueOf(1.99), Rating.NOT_RATED, LocalDate.now()),
+            new Food(2, "Meat", BigDecimal.valueOf(3.99), Rating.NOT_RATED, LocalDate.now()),
+            new Drink(3, "Juice", BigDecimal.valueOf(0.99), Rating.NOT_RATED),
+            new Drink(4, "Water", BigDecimal.valueOf(.5), Rating.NOT_RATED),
+        };
+        List<Product> list = Arrays.asList(array);
+
+        Optional<String> x1 = list.stream().map(p -> p.getName()).reduce((s1, s2) -> s1 + " " + s2);
+        System.out.println("Concatenando: "+(x1.orElse("no data")));
+
+        String x2 = list.stream().map(p -> p.getName()).reduce("inicial string: ", (s1, s2) -> s1 + " " + s2);
+        System.out.println("Concatenando: "+x2);
+
+        String x3 = list.stream().parallel().reduce("inicial string: ", (s, p) -> p.getName(), (s1, s2) -> s1 + " " + s2);
+        System.out.println("Concatenando: "+x2);
+    }
+    
+    private static void testCollect() {
+        Product[] array = {
+            new Food(1, "Hot-dog", BigDecimal.valueOf(1.99), Rating.NOT_RATED, LocalDate.now()),
+            new Food(2, "Meat", BigDecimal.valueOf(3.99), Rating.NOT_RATED, LocalDate.now()),
+            new Drink(3, "Juice", BigDecimal.valueOf(0.99), Rating.NOT_RATED),
+            new Drink(4, "Water", BigDecimal.valueOf(.5), Rating.NOT_RATED),
+        };
+        List<Product> list = Arrays.asList(array);
+
+        Map<String, List<Product>> groupByClassName =  list.stream().collect(Collectors.groupingBy(p -> p.getClass().getName()));
+        System.out.println("group by class name: " + groupByClassName);
+           
+    }
+    
+    private static void testFileSystem() {
+        FileSystem fs = FileSystems.getDefault();
+        fs.getFileStores().forEach(s -> System.out.println(s.type()+" "+s.name()));
+        fs.getRootDirectories().forEach(p -> System.out.println(p));
+        System.out.println("separator: "+fs.getSeparator());
+    }
+    
+    private static void testPaths() {
+        
+        Path dir = Path.of("C:", "Users", "antoi", "Desenvolvimento");
+        System.out.println("dir Desenvolvimento: " + dir);
+        System.out.println("Validate dir: "+getRealPath(dir)); // Caminho real. Validado no file system.
+        System.out.println("dir Desenvolvimento: " + dir.getFileName());
+        
+        Path parent = dir.getParent();
+        System.out.println("parent folder: " + parent.getFileName());
+        
+        Path currentDir = getRealPath(Path.of("."));
+        System.out.println("current folder: " + currentDir.getFileName());
+        
+        Path parentDir = getRealPath(Path.of(".."));
+        System.out.println("parent folder: " + parentDir.getFileName());
+        
+        Path file_objeto = getRealPath(currentDir.resolve("..\\..\\objeto.js")); // Caminho relativo a partir de outro
+        System.out.println("Path to file: "+file_objeto);
+        
+        Path file_sibling_of_objeto = getRealPath(file_objeto.resolveSibling("commits-develop.txt"));
+        System.out.println("Path to sibling: "+file_sibling_of_objeto);
+        
+        Path pathBetweenCurrentAndFileObjeto = currentDir.relativize(file_objeto);
+        System.out.println("Path relative from current folder to object file: " + pathBetweenCurrentAndFileObjeto);
+        
+        Path relative = getRealPath(Path.of("./build.xml"));
+        for (int i = 0; i < relative.getNameCount(); i++) {
+            Path p = relative.getName(i);
+            System.out.println("File: "+p);
+        }
+        
+        System.out.println("------------------");
+        System.out.println("List of contents:");
+        System.out.println("------------------");
+
+        try {
+            Files.list(currentDir).forEach(p -> System.out.println(p));
+        } catch (IOException ex) {
+            Logger.getLogger(TestesMain.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        System.out.println("------------------");
+        System.out.println("Get all tree:");
+        System.out.println("------------------");
+
+        try {
+            Files.walk(currentDir)
+                    .map(p -> p.toString())
+                    .filter(s -> s.endsWith(".java"))
+                    .forEach(p -> System.out.println(p));
+        } catch (IOException ex) {
+            Logger.getLogger(TestesMain.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }
+    
+    private static Path getRealPath(Path path) {
+        try {
+            return path.toRealPath();
+        } catch (IOException ex) {
+            Logger.getLogger(TestesMain.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
+    private static void testFilesProperties() {
+        Path dir = getRealPath(Path.of("C:", "Users", "antoi", "Desenvolvimento"));
+        Path p1 = getRealPath(dir.resolve(Path.of("curso-java-oracle", "ProductManagement", "build.xml")));
+        Path p2 = getRealPath(p1.resolveSibling("manifest.mf"));
+        System.out.println("is a directory: " + Files.isDirectory(p1));
+        System.out.println("is a executable: " + Files.isExecutable(p1));
+        try {
+            System.out.println("is a directory: " + Files.isHidden(p1));
+        } catch (IOException ex) {
+            Logger.getLogger(TestesMain.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        System.out.println("is a directory: " + Files.isReadable(p1));
+        System.out.println("is a directory: " + Files.isWritable(p1));
+        System.out.println("is a directory: " + Files.isRegularFile(p1));
+        System.out.println("is a directory: " + Files.isSymbolicLink(p1));
+        try {
+            System.out.println("is a directory: " + Files.isSameFile(p1, p2));
+        } catch (IOException ex) {
+            Logger.getLogger(TestesMain.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        try {
+            System.out.println("is a directory: " + Files.probeContentType(p1));
+        } catch (IOException ex) {
+            Logger.getLogger(TestesMain.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        System.out.println("is a directory: " + Files.isDirectory(p1));
+
+    }
+    
+    private static void testCreatePaths() {
+        Path desenvolvimento = getRealPath(Path.of("../.."));
+        System.out.println(desenvolvimento);
+        
+        Path temp = desenvolvimento.resolve("temp");
+        
+        if (Files.exists(temp)) {
+            try {
+                Files.deleteIfExists(temp.resolve("teste.txt"));
+                Files.delete(temp);
+            } catch (IOException ex) {
+                Logger.getLogger(TestesMain.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        if (Files.notExists(temp)) {
+            try {
+                Files.createDirectories(temp);
+                System.out.println("Temp Exists? "+Files.exists(temp));
+                System.out.println(temp);
+                
+                Path file = temp.resolve("teste.txt");
+                if (Files.notExists(file)) {
+                    Files.createFile(file);
+                    Files.writeString(file, "Teste de escrita!!");
+                    Files.lines(file, Charset.forName("UTF-8")).forEach(l -> System.out.println(l));
+                }
+              
+                Files.deleteIfExists(file);
+                Files.delete(temp);
+                System.out.println("Temp Exists? "+Files.exists(temp));
+            } catch (IOException ex) {
+                Logger.getLogger(TestesMain.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 }
 
