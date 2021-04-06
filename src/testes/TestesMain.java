@@ -7,6 +7,7 @@ package testes;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -713,12 +714,12 @@ public class TestesMain {
         
         if (Files.exists(temp)) {
             try {
-                Files.deleteIfExists(temp.resolve("teste.txt"));
-                Files.delete(temp);
+                deleteNotEmptyFolder(temp);
             } catch (IOException ex) {
                 Logger.getLogger(TestesMain.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+        
         if (Files.notExists(temp)) {
             try {
                 Files.createDirectories(temp);
@@ -739,6 +740,26 @@ public class TestesMain {
                 Logger.getLogger(TestesMain.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+    }
+    
+    private static void deleteNotEmptyFolder(Path path) throws IOException {
+        Files.walk(path)
+                .sorted(Comparator.reverseOrder())
+                .forEach(innerPath -> {
+                    try {
+                        Files.delete(innerPath);
+                    } catch (IOException ex) {
+                        Logger.getLogger(TestesMain.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                });
+    }
+    
+    private static void accessHttpResource() {
+        Path path = Path.of("docs", "index.html");
+        URI uri = URI.create("http://openjdk.java.net");
+        //HttpRequest req = HttpRequest.newBuilder(uri).GET().build();
+        //HttpClient client = HttpClient.newHttpClient();
+        //HttpResponse<Path> res = client.send(req, HttpResponse.BodyHandlers.ofFile(path));
     }
 }
 
