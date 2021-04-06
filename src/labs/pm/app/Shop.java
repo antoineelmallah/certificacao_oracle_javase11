@@ -75,6 +75,10 @@ public class Shop {
         
         pm.printProductReport(105);
 
+//        pm.dumpData();
+//        pm.restoreData();
+        
+        pm.printProductReport(102);
         
 //        Product p1 = pm.createProduct(101, "Tea", BigDecimal.valueOf(1.99), Rating.NOT_RATED);
 //        Product p2 = pm.createProduct(102, "Coffee", BigDecimal.valueOf(1.99), Rating.FOUR_STAR);
