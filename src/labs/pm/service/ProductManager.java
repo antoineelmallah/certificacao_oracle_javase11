@@ -3,45 +3,31 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package labs.pm.data;
+package labs.pm.service;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.text.MessageFormat;
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.format.FormatStyle;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+import labs.pm.data.Product;
+import labs.pm.data.Rating;
+import labs.pm.data.Review;
 
 /**
  *
  * @author antoi
  */
+public interface ProductManager {
+    Product createProduct(int id, String name, BigDecimal price, Rating rating) throws ProductManagerException;
+    Product createProduct(int id, String name, BigDecimal price, Rating rating, LocalDate bestBefore) throws ProductManagerException;
+    Product reviewProduct(int id, Rating rating, String comments) throws ProductManagerException;
+    Product findProduct(int id) throws ProductManagerException;
+    List<Product> findProducts(Predicate<Product> filter) throws ProductManagerException;
+    List<Review> findReviews(int id) throws ProductManagerException;
+    Map<Rating, BigDecimal> getDiscounts() throws ProductManagerException;
+}
+/*
 public class ProductManager {
     
     private static final Logger logger = Logger.getLogger(ProductManager.class.getName());
@@ -50,14 +36,12 @@ public class ProductManager {
     
     private final ResourceBundle config = ResourceBundle.getBundle("labs.pm.data.config");
     
-    private final MessageFormat reviewFormat = new MessageFormat(config.getString("review.data.format"));
-    private final MessageFormat productFormat = new MessageFormat(config.getString("product.data.format"));
-    
-    //private ResourceFormatter formatter;
-    
     private final Path reportsFolder = Path.of(config.getString("reports.folder"));
     private final Path dataFolder = Path.of(config.getString("data.folder"));
     private final Path tempFolder = Path.of(config.getString("temp.folder"));
+    
+    private final MessageFormat reviewFormat = new MessageFormat(config.getString("review.data.format"));
+    private final MessageFormat productFormat = new MessageFormat(config.getString("product.data.format"));
     
     private static final Map<String, ResourceFormatter> formatters = Map.of(
         "en-GB", new ResourceFormatter(Locale.UK),
@@ -74,14 +58,9 @@ public class ProductManager {
     private final Lock readLock = lock.readLock();
 
     private ProductManager() {
-//        changeLocale(languageTag);
         loadAllData();
     }
-/*    
-    public void changeLocale(String languageTag) {
-        this.formatter = formatters.getOrDefault(languageTag, formatters.get("en-GB"));
-    } 
-*/    
+
     public static Set<String> getSupportedLocales() {
         return formatters.keySet();
     }
@@ -333,7 +312,7 @@ public class ProductManager {
                         product -> product.getRating().toString(), 
                         Collectors.collectingAndThen(
                             Collectors.summingDouble(product -> product.getDiscount().doubleValue()), 
-                            discount -> formatter.moneyFormat.format(discount)
+                            discount -> formatter.getMoneyFormat().format(discount)
                         )
                     )
                 );
@@ -345,37 +324,5 @@ public class ProductManager {
     public static ProductManager getInstance() {
         return pm;
     }
-    
-    private static class ResourceFormatter {
-
-        private Locale locale;
-        private ResourceBundle resources;
-        private DateTimeFormatter dateFormat;
-        private NumberFormat moneyFormat;
-
-        public ResourceFormatter(Locale locale) {
-            this.locale = locale;
-            this.resources = ResourceBundle.getBundle("labs.pm.data.resources", locale);
-            this.dateFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).localizedBy(locale);
-            this.moneyFormat = NumberFormat.getCurrencyInstance(locale);
-        }
-        
-        private String formatProduct(Product product) {
-            return MessageFormat.format(resources.getString("products"), 
-                product.getName(),
-                moneyFormat.format(product.getPrice()),
-                product.getRating(),
-                dateFormat.format(product.getBestBefore()));
-        }
-        
-        private String formatReview(Review review) {
-            return MessageFormat.format(resources.getString("review"), 
-                review.getRating(),
-                review.getComments());
-        }
-        
-        private String getText(String key) {
-            return resources.getString(key);
-        }
-    }
 }
+*/
