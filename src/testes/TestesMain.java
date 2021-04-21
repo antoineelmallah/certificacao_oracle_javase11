@@ -66,7 +66,8 @@ public class TestesMain {
         //testFileSystem();
         //testPaths();
         //testFilesProperties();
-        testCreatePaths();
+        //testCreatePaths();
+        testThreads();
     }
     
     private static void arrayDeclaration() {
@@ -760,6 +761,62 @@ public class TestesMain {
         //HttpRequest req = HttpRequest.newBuilder(uri).GET().build();
         //HttpClient client = HttpClient.newHttpClient();
         //HttpResponse<Path> res = client.send(req, HttpResponse.BodyHandlers.ofFile(path));
+    }
+    
+    private static void testThreads() {
+        Thread t1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Thread ct = Thread.currentThread();
+                while (!ct.isInterrupted()) {
+                    System.out.println("Interrupted!!");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        return;
+                    }
+                }
+            }
+        });
+        System.out.println(t1.getState());
+        t1.start();
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        }
+        t1.interrupt();
+        System.out.println(t1.getState());
+        new Thread(new AnRunnable()).start();
+        new Thread(new AnRunnable()).start();
+        new Thread(new AnRunnable()).start();
+        new Thread(new AnRunnable()).start();
+        new AnThread().start();
+        Runnable r = () -> System.out.println("Com lambda!!");
+        new Thread(r).start();
+    }
+    
+    private static class AnThread extends Thread {
+
+        @Override
+        public void run() {
+            System.out.println("Thread started.");
+            System.out.println("Thread ended.");
+        }
+        
+    }
+    
+    private static class AnRunnable implements Runnable {
+
+        private final long index = Math.round(Math.random() * 100);
+        
+        @Override
+        public void run() {
+            System.out.println("Thread " + index + " started.");
+            System.out.println("Thread " + index + " ended.");
+        }
+        
     }
 }
 
